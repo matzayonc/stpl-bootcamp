@@ -1,0 +1,8 @@
+{
+  "name": "dynaprez",
+  "version": "0.1.0",
+  "description": "Author, brand, and build LaTeX Beamer slide decks. Ships narrative and visual conventions as skills, plus a themeable deck template with an overlay deduplicating build.",
+  "author": {
+    "name": "Mateusz Zajac"
+  }
+}

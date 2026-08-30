@@ -86,3 +86,17 @@ See [`style.md`](style.md) for the source of truth on titles, bullets, helper bl
 ## Font
 
 Uses [Archivo](https://fonts.google.com/specimen/Archivo) via the `Archivo` LaTeX package (included in `texlive-fontsextra`).
+
+## Publishing as a tool
+
+`plugin/` packages this setup as a Claude Code plugin — the authoring
+conventions as skills, plus a brand-neutral copy of the deck template. It is
+independent of the decks in `presentations/`, which keep using the
+Superteam-specific `preamble.tex` and `style.md` at the repo root.
+
+```
+/plugin marketplace add matzayonc/stpl-slides
+/plugin install dynaprez@dynaprez
+```
+
+See [`plugin/README.md`](plugin/README.md).

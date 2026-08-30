@@ -1,0 +1,275 @@
+%% ================================================================
+%% preamble.tex — layout and chrome.
+%%
+%% Reads every color, font, and asset path from `brand.tex`. Edit
+%% brand.tex to rebrand; edit this file only to change the layout
+%% itself (and update the deck-branding skill's notes when you do).
+%% ================================================================
+\documentclass[aspectratio=169]{beamer}
+
+\usepackage{etoolbox}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\input{brand}
+
+\ifdefempty{\dpfontpackage}{}{%
+  \expandafter\usepackage\expandafter{\dpfontpackage}%
+  \renewcommand{\sfdefault}{\rmdefault}%
+}
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning}
+%% `visible on=<2->` for staged diagram reveals. MUST live here and not
+%% inside a frame: Beamer re-catcodes < and > for overlay parsing, which
+%% breaks the `.code args={<#1>#2#3}` definition below.
+\tikzset{
+  invisible/.style={opacity=0, text opacity=0},
+  visible on/.style={alt={#1{}{invisible}}},
+  alt/.code args={<#1>#2#3}{%
+    \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}%
+  },
+}
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+
+\usetheme{default}
+\setbeamersize{text margin left=0.85cm, text margin right=0.85cm}
+
+%% ---- Base colors ----
+\setbeamercolor{background canvas}{bg=dpbg}
+\setbeamercolor{normal text}{fg=dpfg, bg=dpbg}
+\usebeamercolor{normal text}
+\setbeamercolor{structure}{fg=dpaccent}
+
+%% ---- Asset helpers (a missing or unset asset degrades silently) ----
+\newcommand{\dpiflogo}[1]{%
+  \ifdefempty{\dplogofile}{}{\IfFileExists{\dplogofile}{#1}{}}%
+}
+\newcommand{\dplogoat}[1]{\dpiflogo{\includegraphics[#1]{\dplogofile}}}
+
+\newcommand{\dpbgimage}[1]{%
+  \IfFileExists{#1}{%
+    \node[at=(current page.center), inner sep=0pt] {%
+      \includegraphics[width=\paperwidth,height=\paperheight]{#1}%
+    };%
+  }{}%
+}
+
+\newcommand{\dpprogress}{%
+  \ifdefstring{\dpprogressbar}{true}{%
+    \fill[dpborder]
+      (current page.north west) rectangle
+      ([yshift=-2.5pt]current page.north east);
+    \pgfmathsetmacro{\dpprog}{\insertframenumber/\inserttotalframenumber}
+    \fill[dpaccent]
+      (current page.north west) rectangle
+      ($(current page.north west)+(\dpprog\paperwidth,-2.5pt)$);
+  }{}%
+}
+
+%% ---- Backgrounds ----
+\newcommand{\dpdefaultbg}{%
+  \setbeamertemplate{background}{%
+    \begin{tikzpicture}[remember picture, overlay]
+      \ifdefempty{\dpbgdefaultfile}{}{\dpbgimage{\dpbgdefaultfile}}
+      \dpprogress
+    \end{tikzpicture}%
+  }%
+}
+\newcommand{\dpherobg}{%
+  \setbeamertemplate{background}{%
+    \ifdefempty{\dpbgherofile}{}{%
+      \IfFileExists{\dpbgherofile}{%
+        \includegraphics[width=\paperwidth,height=\paperheight]{\dpbgherofile}%
+      }{}%
+    }%
+  }%
+}
+\dpdefaultbg
+
+%% ---- Title slide metadata ----
+\setbeamercolor{title}{fg=dpfg}
+\setbeamercolor{subtitle}{fg=dpaccent}
+\setbeamercolor{author}{fg=dpfg}
+\setbeamercolor{institute}{fg=dpmuted}
+\setbeamercolor{date}{fg=dpmuted}
+\date{\the\year}
+
+%% ---- Frame title: flat, centered, short accent rule ----
+\setbeamercolor{frametitle}{fg=dpfg, bg=}
+\setbeamerfont{frametitle}{size=\large, series=\bfseries}
+\setbeamertemplate{frametitle}{%
+  \vspace{0.35cm}%
+  {\centering\insertframetitle\par}%
+  \nointerlineskip\vspace{0.18cm}%
+  \hfil{\color{dpaccent}\rule{2.2cm}{1.5pt}}\hfil\par%
+}
+
+%% ---- Incremental reveals ----
+%% Bullets reveal one at a time by default. Two per-frame opt-outs exist
+%% (static frame, manually choreographed frame) — see the deck-writing skill.
+\beamerdefaultoverlayspecification{<+->}
+
+%% ---- Bullets ----
+\setbeamercolor{itemize item}{fg=dpaccent}
+\setbeamercolor{itemize subitem}{fg=dpmuted}
+\setbeamercolor{itemize subsubitem}{fg=dpmuted}
+\setbeamertemplate{itemize item}{\bfseries\textendash}
+\setbeamertemplate{itemize subitem}{\small\textendash}
+\setbeamercolor{enumerate item}{fg=dpaccent}
+\setbeamercolor{enumerate subitem}{fg=dpmuted}
+\setbeamertemplate{enumerate item}{\textcolor{dpaccent}{\bfseries\insertenumlabel.}}
+\setbeamertemplate{enumerate subitem}{\textcolor{dpmuted}{\small\insertenumlabel.}}
+
+%% ---- Blocks (flat left-accent cards via tcolorbox) ----
+\tcbset{
+  dpbase/.style={
+    enhanced, breakable,
+    colback=dpcard, coltext=dpfg,
+    coltitle=dpfg, fonttitle=\bfseries,
+    boxrule=0pt, leftrule=3pt,
+    arc=0pt, outer arc=0pt,
+    top=5pt, bottom=5pt, left=7pt, right=7pt,
+    toptitle=4pt, bottomtitle=4pt,
+    titlerule=0pt,
+  },
+}
+%% The leading \pause makes a helper block land on its own overlay, after
+%% the bullets above it. `codeblock` below is the same card without it.
+\renewenvironment{block}[1]{%
+  \pause%
+  \begin{tcolorbox}[dpbase, colframe=dpaccent, title={#1}]%
+}{%
+  \end{tcolorbox}%
+}
+\renewenvironment{alertblock}[1]{%
+  \pause%
+  \begin{tcolorbox}[dpbase, colframe=dpaccent!75!black,
+    colback=dpaccent!10!dpcard, title={#1}]%
+}{%
+  \end{tcolorbox}%
+}
+\renewenvironment{exampleblock}[1]{%
+  \pause%
+  \begin{tcolorbox}[dpbase, colframe=dpmuted, title={#1}]%
+}{%
+  \end{tcolorbox}%
+}
+
+%% ---- Code listings ----
+\lstset{
+  basicstyle=\ttfamily\scriptsize\color{dpfg},
+  backgroundcolor=\color{dpcard},
+  keywordstyle=\color{dpaccent}\bfseries,
+  commentstyle=\color{dpmuted},
+  stringstyle=\color{dpmuted},
+  showstringspaces=false,
+  keepspaces=true,
+  columns=fixed,
+  basewidth=0.46em,
+  frame=leftline,
+  framerule=2pt,
+  rulecolor=\color{dpaccent},
+  xleftmargin=0.6em,
+  aboveskip=0.4em,
+  belowskip=0.2em,
+  escapeinside={(*@}{@*)},
+}
+
+%% ---- Code reveal card (lines synced to bullets) ----
+%% The block card WITHOUT the auto-\pause, so it is visible from the current
+%% overlay and its lines can reveal in step with the itemize above via
+%% (*@\onslide<k->@*) tags. [style=reveal] drops the listing's own background
+%% so the solid card shows through instead of going ragged line by line.
+\newtcolorbox{codeblock}[1]{dpbase, colframe=dpaccent, title={#1}}
+\lstdefinestyle{reveal}{backgroundcolor={}, frame=none, xleftmargin=0pt,
+  aboveskip=0pt, belowskip=0pt}
+
+%% ---- Table of contents ----
+\setbeamercolor{section in toc}{fg=dpfg}
+\setbeamercolor{subsection in toc}{fg=dpmuted}
+\setbeamertemplate{section in toc}{%
+  {\color{dpaccent}\textbf{\textendash}}\hspace{0.5em}\inserttocsection%
+}
+
+%% ---- Footline ----
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=0pt, dp=0.55cm]{normal text}%
+    \hspace{0.85cm}%
+    \dplogoat{height=\dplogofootheight}%
+    \hfill%
+    \textcolor{dpmuted}{\tiny\insertframenumber\,/\,\inserttotalframenumber}%
+    \hspace{0.85cm}%
+  \end{beamercolorbox}%
+}
+\setbeamertemplate{navigation symbols}{}
+
+%% ---- Title page ----
+\setbeamertemplate{title page}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[dpaccent]
+      (current page.north west) rectangle ([xshift=5pt]current page.south west);
+    \fill[dpaccent, opacity=0.07]
+      ([xshift=-3cm,yshift=3cm]current page.north east) circle (5.5cm);
+    \fill[dpaccent, opacity=0.04]
+      ([yshift=-1.5cm]current page.south east) circle (3.5cm);
+  \end{tikzpicture}%
+  \vfill
+  \hspace{0.08\paperwidth}%
+  \begin{minipage}{0.85\paperwidth}
+    \dpiflogo{\dplogoat{width=\dplogotitlewidth}\par\vspace{0.8cm}}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle}\par
+    \vspace{0.2cm}
+    {\color{dpaccent}\rule{3cm}{1.5pt}}\par
+    \vspace{0.3cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle}\par
+    \vspace{0.65cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor}\par
+    \vspace{0.12cm}
+    {\small\textcolor{dpmuted}{\insertinstitute\enspace\textperiodcentered\enspace\insertdate}}
+  \end{minipage}%
+  \vfill
+}
+
+\newcommand{\maketitleframe}{%
+  \dpherobg
+  \begin{frame}[plain]%
+    \titlepage%
+  \end{frame}%
+  \dpdefaultbg
+}
+
+%% ---- Section dividers (automatic — never author these by hand) ----
+\AtBeginSection[]{%
+  \dpherobg
+  \begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[dpaccent, opacity=0.07]
+        ([xshift=-2.5cm]current page.east) circle (5.5cm);
+      \fill[dpaccent]
+        (current page.north west) rectangle ([xshift=5pt]current page.south west);
+    \end{tikzpicture}%
+    \vfill
+    \hspace{0.1\paperwidth}%
+    \begin{minipage}{0.8\paperwidth}
+      \textcolor{dpmuted}{\small \dpsectionlabel\ \thesection}\\[0.35cm]
+      {\color{dpfg}\LARGE\bfseries\insertsectionhead}\\[0.25cm]
+      {\color{dpaccent}\rule{3cm}{1.5pt}}
+    \end{minipage}%
+    \vfill
+  \end{frame}%
+  \dpdefaultbg
+}
+
+%% ---- Closing frame (mandatory last slide of every deck) ----
+\newcommand{\makeclosingframe}{%
+  \begin{frame}[plain]
+    \begin{center}
+      \vfill
+      {\Huge\bfseries\color{dpfg}\dpclosingword}
+      \vfill
+    \end{center}
+  \end{frame}%
+}

@@ -1,0 +1,47 @@
+%% ================================================================
+%% brand.tex — every visual decision that is yours, in one file.
+%%
+%% This is the ONLY file you need to edit to rebrand a deck.
+%% `preamble.tex` consumes these definitions and should not need
+%% changes unless you are altering the layout itself.
+%% ================================================================
+
+%% ---- Palette ----------------------------------------------------
+%% Six roles. Keep the roles even if you change the hexes: the
+%% preamble and every diagram recipe refer to them by role.
+\definecolor{dpbg}{HTML}{0B0E0F}      % slide background
+\definecolor{dpcard}{HTML}{161A1B}    % block / card surface
+\definecolor{dpborder}{HTML}{1E2526}  % hairlines, progress-bar track
+\definecolor{dpaccent}{HTML}{DC143C}  % brand accent: rules, bullets, keywords
+\definecolor{dpfg}{HTML}{FFFFFF}      % primary text
+\definecolor{dpmuted}{HTML}{8A9BA8}   % secondary text, axis lines, citations
+
+%% Light-background decks: swap dpbg/dpfg, then darken dpmuted and LIGHTEN
+%% dpcard and dpborder to match — all four were picked for a dark ground and
+%% stay near-black otherwise (a black progress-bar track on white is the
+%% giveaway). E.g.
+%%   \definecolor{dpbg}{HTML}{FFFFFF}
+%%   \definecolor{dpcard}{HTML}{F2F4F5}
+%%   \definecolor{dpborder}{HTML}{E3E7E9}
+%%   \definecolor{dpfg}{HTML}{111417}
+%%   \definecolor{dpmuted}{HTML}{5A6B78}
+
+%% ---- Typeface ---------------------------------------------------
+%% Any package that sets a text font. Leave empty for Computer Modern.
+%% `Archivo` and `FiraSans` ship in texlive-fontsextra.
+\newcommand{\dpfontpackage}{Archivo}
+
+%% ---- Assets -----------------------------------------------------
+%% Paths relative to the project root. Leave a macro EMPTY to skip
+%% that element entirely — a missing file is never a build error.
+\newcommand{\dplogofile}{}          % e.g. images/logo.png
+\newcommand{\dpbgdefaultfile}{}     % full-bleed background for content slides
+\newcommand{\dpbgherofile}{}        % background for title + section dividers
+
+\newcommand{\dplogotitlewidth}{3cm}   % logo size on the title slide
+\newcommand{\dplogofootheight}{1.6ex} % logo size in the footline
+
+%% ---- Chrome -----------------------------------------------------
+\newcommand{\dpprogressbar}{true}   % `true` draws the top progress bar
+\newcommand{\dpsectionlabel}{Section} % prefix on divider slides
+\newcommand{\dpclosingword}{gn}     % the word on the mandatory sign-off slide
