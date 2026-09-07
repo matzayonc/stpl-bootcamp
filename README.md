@@ -87,16 +87,19 @@ See [`style.md`](style.md) for the source of truth on titles, bullets, helper bl
 
 Uses [Archivo](https://fonts.google.com/specimen/Archivo) via the `Archivo` LaTeX package (included in `texlive-fontsextra`).
 
-## Publishing as a tool
+## dynaprez, the plugin
 
-`plugin/` packages this setup as a Claude Code plugin — the authoring
-conventions as skills, plus a brand-neutral copy of the deck template. It is
-independent of the decks in `presentations/`, which keep using the
-Superteam-specific `preamble.tex` and `style.md` at the repo root.
+The authoring conventions in this repo are also published as a standalone
+Claude Code plugin — the rules as skills, plus a brand-neutral copy of the deck
+template. It lives in its own repository,
+[matzayonc/dynaprez](https://github.com/matzayonc/dynaprez):
 
 ```
-/plugin marketplace add matzayonc/stpl-slides
+/plugin marketplace add matzayonc/dynaprez
 /plugin install dynaprez@dynaprez
 ```
 
-See [`plugin/README.md`](plugin/README.md).
+The decks in `presentations/` do not use it. They keep the Superteam-specific
+`preamble.tex`, `style.md`, `branding.md`, and `graphs.md` at the repo root,
+which remain the source of truth here. When a rule changes in both places,
+change it here first and port it over.
