@@ -17,12 +17,30 @@
 
 \maketitleframe
 
+\begin{frame}{About me}
+  \begin{itemize}
+    \item \textbf{Rust} systems engineer, five years --- blockchain and cryptography
+    \item Shipped production DeFi, zero-knowledge proving systems, and blockchain core infrastructure
+    \item Owned state validity, consistency and \textbf{fault tolerance} on a live chain
+    \item Now DevRel at \textbf{Superteam Poland}
+  \end{itemize}
+  \vspace{0.2cm}
+  \begin{block}{Why this talk}
+    Owning state and failure on a live chain is where the actor model earns its
+    keep --- it is the tool I keep reaching for.
+  \end{block}
+  \vspace{0.1cm}
+  \begin{center}
+    \textcolor{stplmuted}{\small github.com/matzayonc}
+  \end{center}
+\end{frame}
+
 \begin{frame}{Plan}
   \tableofcontents
 \end{frame}
 
 % ================================================================
-\section{The problem with sharing}
+\section{Sharing state}
 
 \begin{frame}[fragile]{Shared by default}
   \begin{itemize}
@@ -67,7 +85,23 @@ tokio::spawn(async move { *v.lock().unwrap() += 100; });
   \end{block}
 \end{frame}
 
+% ---------------------------------------------------------------
+% Fake end (style.md 4.5a static frame): a pixel-for-pixel copy of the real
+% gn closer. After "data races become impossible" the room thinks the talk is
+% solved and over --- then "The lock tax" pulls it back. The joke needs the
+% speaker to sell the pause; keep it identical to the closer for the callback.
+\begin{frame}[plain]
+  \begin{center}
+    \vfill
+    {\Huge\bfseries\color{stplwhite} gn}
+    \vfill
+  \end{center}
+  \note{Beat. ``Thanks for coming --- good night.'' Let it land, then click on: ``...almost.''}
+\end{frame}
+
 \begin{frame}{The lock tax}
+  \textcolor{stplmuted}{\emph{...almost.}}
+  \vspace{0.1cm}
   \begin{itemize}
     \item The compiler checks that access is exclusive --- not that lock \textbf{order} is consistent
     \item Under contention, threads queue on one cache line and extra cores stop helping
@@ -538,6 +572,16 @@ impl Vault {
     The actor model is not a library. It is the answer to the question the
     borrow checker keeps asking.
   \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\begin{frame}{Resources}
+  \begin{itemize}
+    \item \textbf{The Actoromicon} --- building actor systems in Rust
+      \hfill \textcolor{stplmuted}{\small actoromicon.rs}
+    \item \textbf{Tokio} --- the async runtime behind every example here
+      \hfill \textcolor{stplmuted}{\small tokio.rs}
+  \end{itemize}
 \end{frame}
 
 % ================================================================

@@ -1,0 +1,564 @@
+\input{preamble}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Deck-local listing keywords: CPI / PDA vocabulary absent from the shared
+%% Anchor keyword set in preamble.tex.
+\lstset{morekeywords={CpiContext,Interface,InterfaceAccount,TokenInterface,
+                      TokenAccount,Mint,Token,TransferChecked,transfer_checked,
+                      invoke_signed,new_with_signer,bumps,ProgramError,
+                      derive,Accounts,is_signer,key,as_ref}}
+
+\title{CPI i podpis PDA}
+\subtitle{Program, który podpisuje --- Solana Bootcamp}
+\author{}
+\institute{Superteam Poland}
+
+\begin{document}
+
+\maketitleframe
+
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+% ================================================================
+\section{CPI}
+
+% 1. Program nie ma rak --- problem hook (alertblock)
+\begin{frame}{Program nie ma rąk}
+  \begin{itemize}
+    \item Z Lekcji 9: skarbiec programu to zwykłe konto tokenowe
+    \item Z Lekcji 5: bajty konta zmienia wyłącznie jego program-właściciel
+    \item Skarbiec należy do Token Programu --- nie do naszego programu
+    \item To nie ograniczenie Anchora, tylko reguła samej sieci
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.8cm, minimum height=0.6cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        bad/.style={-latex, draw=stplmuted, line width=0.9pt, dashed},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box, minimum width=3.0cm] (d)  at (0,   0.48) {diamond\_hands};
+      \node[box, minimum width=3.0cm] (tp) at (0,  -0.62) {Token Program};
+      \node[box, minimum width=2.4cm] (v)  at (5.6, -0.07) {skarbiec};
+
+      \draw[bad] (d) -- (v) node[midway, above, lbl] {zapis};
+      \draw[arr] (tp) -- (v) node[midway, below, lbl] {zapis};
+
+      % the crossed-out illegal write
+      \node[font=\normalsize\bfseries, text=stplred] at (2.75, 0.34) {$\times$};
+      \node[lbl, text=stplred] at (2.75, 0.75) {cudze konto};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.05cm}
+  \begin{alertblock}{Problem}
+    Program ma wydać tokeny ze skarbca, ale nie wolno mu dotknąć konta,
+    na którym one leżą.
+  \end{alertblock}
+\end{frame}
+
+% 2. Cross-Program Invocation --- term debut (block: def)
+\begin{frame}{Wywołanie programu}
+  \begin{itemize}
+    \item Skoro nie wolno pisać samemu --- trzeba poprosić właściciela
+    \item Program w trakcie instrukcji wywołuje inny program
+    \item To \textbf{Cross-Program Invocation (CPI)} --- z Lekcji 3 znane jako klocki
+    \item Z Lekcji 6: atomowość obejmuje całe drzewo wywołań, nie jedną instrukcję
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.6cm, minimum height=0.55cm, align=center,
+        },
+        env/.style={draw=stplmuted, line width=0.7pt, dashed, rounded corners=4pt},
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box, minimum width=2.4cm] (i)  at (0,   0) {instrukcja};
+      \node[box, minimum width=3.0cm] (d)  at (3.6, 0) {diamond\_hands};
+      \node[box, minimum width=2.6cm] (tp) at (7.8, 0) {Token Program};
+
+      \draw[arr] (i) -- (d);
+      \draw[arr] (d) -- (tp) node[midway, above, lbl] {CPI};
+
+      \draw[env] ($(i.north west)+(-0.2,0.6)$) rectangle ($(tp.south east)+(0.2,-0.25)$);
+      \node[lbl] at (3.6, 0.78) {jedna transakcja --- albo wszystko, albo nic};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.05cm}
+  \begin{block}{Definicja}
+    CPI = instrukcja wywołana przez program, a nie przez użytkownika.
+    Wywoływany program może w ten sam sposób wywołać kolejny.
+  \end{block}
+\end{frame}
+
+% 3. CPI w Anchorze --- code IS the slide
+\begin{frame}[fragile]{CPI w Anchorze}
+  \begin{itemize}
+    \item Najpierw struktura kont, których wymaga wywoływana instrukcja
+    \item Potem kontekst: który program wywołać i z jakimi kontami
+    \item \texttt{CpiContext::new} przyjmuje \textbf{program ID}, nie konto programu
+    \item Na końcu wywołanie --- \texttt{decimals} czytane z mintu, nie wpisane na sztywno
+  \end{itemize}
+  \begin{codeblock}{Przelew ze skarbca użytkownika do programu}
+\begin{lstlisting}[style=reveal]
+(*@\onslide<1->@*)let cpi_accounts = TransferChecked {
+(*@\onslide<1->@*)    from: ctx.accounts.payer_ata.to_account_info(),
+(*@\onslide<1->@*)    to: ctx.accounts.vault.to_account_info(),
+(*@\onslide<1->@*)    authority: ctx.accounts.payer.to_account_info(),
+(*@\onslide<1->@*)    mint: ctx.accounts.mint.to_account_info(),
+(*@\onslide<1->@*)};
+(*@\onslide<3->@*)let cpi_ctx = CpiContext::new(
+(*@\onslide<3->@*)    ctx.accounts.token_program.key(), cpi_accounts);
+(*@\onslide<4->@*)transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
+\end{lstlisting}
+  \end{codeblock}
+\end{frame}
+
+% 4. Ukryte CPI --- (exampleblock: cost illustration)
+\begin{frame}{Ukryte CPI}
+  \begin{itemize}
+    \item Nie każde CPI widać w kodzie --- część dokłada sam Anchor
+    \item \texttt{init} zleca Systemowi utworzenie konta i opłacenie rent
+    \item Dla konta tokenowego dochodzi jeszcze inicjalizacja u Token Programu
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.7cm, minimum height=0.5cm, align=center,
+        },
+        hid/.style={
+          draw=stplmuted, line width=0.7pt,
+          fill=stplcard, text=stplmuted,
+          rounded corners=2pt,
+          minimum width=3.2cm, minimum height=0.45cm, align=center,
+          font=\tiny\bfseries,
+        },
+        arr/.style={-latex, draw=stplmuted, line width=0.7pt},
+        mine/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box, minimum width=2.2cm] (l) at (0, 0) {lockup};
+
+      \node[hid] (c1) at (4.2,  0.95) {create\_account (locker)};
+      \node[hid] (c2) at (4.2,  0.35) {create\_account (vault)};
+      \node[hid] (c3) at (4.2, -0.25) {initialize\_account3};
+      \node[box, minimum width=3.2cm] (c4) at (4.2, -0.9) {transfer\_checked};
+
+      \draw[arr]  (l.east) -- (c1.west);
+      \draw[arr]  (l.east) -- (c2.west);
+      \draw[arr]  (l.east) -- (c3.west);
+      \draw[mine] (l.east) -- (c4.west);
+
+      \node[lbl] at (7.6,  0.35) {dokłada Anchor};
+      \node[lbl, text=stplred] at (7.6, -0.9) {napisane ręcznie};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.1cm}
+  \begin{exampleblock}{Koszt}
+    Każde z tych wywołań zużywa budżet obliczeniowy transakcji ---
+    a w kodzie widać tylko ostatnie.
+  \end{exampleblock}
+\end{frame}
+
+% 5. Ryzyka CPI --- (alertblock: arbitrary CPI)
+\begin{frame}{Fałszywy program}
+  \begin{itemize}
+    \item Adres wywoływanego programu to zwykłe konto z transakcji
+    \item Podstawiony program o tym samym interfejsie zrobi coś zupełnie innego
+    \item Dlatego program ID musi być \textbf{przypięty}, a nie przyjęty od klienta
+    \item \texttt{Program} i \texttt{Interface} odrzucają transakcję z obcym adresem
+  \end{itemize}
+  \vspace{0.15cm}
+  \begin{alertblock}{Ryzyko}
+    Wywołanie programu podanego przez użytkownika zamienia własny program
+    w pośrednika dla cudzego kodu.
+  \end{alertblock}
+\end{frame}
+
+% ================================================================
+\section{PDA}
+
+% 6. Podpis bez klucza --- problem hook (alertblock)
+\begin{frame}{Podpis bez klucza}
+  \begin{itemize}
+    \item Przelew ze skarbca wymaga podpisu jego \texttt{authority}
+    \item Gdyby authority miało klucz prywatny, ktoś musiałby go trzymać
+    \item Kto trzyma klucz, ten opróżnia skarbiec --- wracamy do Lekcji 0
+    \item Potrzebny adres, którego kluczem nie dysponuje nikt
+  \end{itemize}
+  \vspace{0.25cm}
+  \begin{alertblock}{Sprzeczność}
+    Skarbiec musi mieć authority, które podpisuje --- i jednocześnie nie może
+    istnieć klucz zdolny go podpisać.
+  \end{alertblock}
+\end{frame}
+
+% 7. Adres poza krzywa --- term debut (block: def)
+\begin{frame}{Adres poza krzywą}
+  \begin{itemize}
+    \item Zwykły adres to klucz publiczny --- punkt na krzywej eliptycznej
+    \item Adres można też policzyć: skrót z wybranych składników i ID programu
+    \item Wynik celowo \textbf{nie leży} na krzywej --- nie ma do niego klucza prywatnego
+    \item Taki adres to \textbf{Program Derived Address (PDA)}
+  \end{itemize}
+  \vspace{0.25cm}
+  \begin{block}{Model myślowy}
+    \texttt{PDA = h(ID programu + składniki)}. Składniki (\texttt{seeds}) wybiera
+    autor programu --- np.\ słowo ,,vault'' i klucz użytkownika.
+  \end{block}
+\end{frame}
+
+% 8. Bump --- term debut (block: def)
+\begin{frame}{Bump}
+  \begin{itemize}
+    \item Skrót zwykle trafia \emph{na} krzywą --- czyli wynik jest bezużyteczny
+    \item Do składników dokłada się wtedy jeden bajt i liczy ponownie
+    \item Zaczyna się od 255 w dół; pierwszy \emph{poza} krzywą to \textbf{bump kanoniczny}
+    \item Bump można zapisać w koncie albo szukać go przy każdym wywołaniu
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[x=0.8cm, y=0.55cm,
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      % Ed25519 curve, schematic: points on it have a private key
+      \draw[draw=stplmuted, line width=0.8pt, smooth, samples=120, domain=-1.45:1.45]
+        plot ({\x}, {sqrt(abs(1 - \x*\x))*1.15});
+      \draw[draw=stplmuted, line width=0.8pt, smooth, samples=120, domain=-1.45:1.45]
+        plot ({\x}, {-sqrt(abs(1 - \x*\x))*1.15});
+      \node[lbl] at (0, -1.68) {krzywa Ed25519 --- tu istnieją klucze};
+
+      % on-curve candidate: rejected
+      \filldraw[fill=stplmuted, draw=stplmuted] (0.72, 0.99) circle (2.4pt);
+      \node[lbl, anchor=west] at (1.05, 1.5) {bump 255: na krzywej --- odpada};
+
+      % off-curve result: the PDA
+      \filldraw[fill=stplwhite, draw=stplred, line width=1.4pt] (4.6, 0.35) circle (3pt);
+      \node[font=\tiny\bfseries, text=stplred, anchor=west] at (4.9, 0.35) {bump 254: PDA};
+      \node[lbl, anchor=west] at (4.9, -0.25) {poza krzywą --- brak klucza};
+
+      \draw[-latex, draw=stplred, line width=0.9pt, dashed]
+        (1.6, 0.75) -- (4.25, 0.42);
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.05cm}
+  \begin{block}{Kompromis}
+    Zapisany bump kosztuje bajt miejsca; szukany --- budżet obliczeniowy.
+  \end{block}
+\end{frame}
+
+% 9. Wyprowadzenie --- static diagram frame (§4.5a)
+\begin{frame}<1>{Wyprowadzenie}
+  \vspace{0.15cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=1pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=1.9cm, minimum height=0.6cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box, minimum width=2.4cm] (s) at (0, 0) {seeds\\\tiny ,,vault'' + klucz};
+      \node[box, minimum width=2.0cm] (p) at (0, -1.5) {ID programu};
+      \node[box, minimum width=1.5cm] (h) at (3.4, -0.75) {skrót};
+      \node[box, minimum width=2.0cm] (c) at (6.4, -0.75) {na krzywej?};
+      \node[box, minimum width=1.9cm] (pda) at (9.5, -0.75) {PDA};
+
+      \draw[arr] (s.east) -- (h.west);
+      \draw[arr] (p.east) -- (h.west);
+      \draw[arr] (h) -- (c);
+      \draw[arr] (c) -- (pda) node[midway, above, lbl] {nie};
+
+      % bump feedback loop
+      \draw[arr] (c.north) -- ++(0,0.55) -| (h.north)
+        node[pos=0.25, above, lbl] {tak --- bump o jeden mniej};
+
+      \node[lbl, text=stplred] at (9.5, -1.5) {brak klucza prywatnego};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.2cm}
+  \begin{itemize}
+    % Static frame renders overlay 1 only --- explicit <1-> keeps every bullet.
+    \item<1-> Ten sam zestaw składników zawsze daje ten sam adres
+    \item<1-> Inny program z tymi samymi składnikami dostaje \emph{inny} adres
+  \end{itemize}
+\end{frame}
+
+% 10. Seeds w Anchorze --- code IS the slide
+\begin{frame}[fragile]{Seeds w Anchorze}
+  \begin{itemize}
+    \item Składniki deklaruje się przy koncie, obok pozostałych constraints
+    \item Samo \texttt{bump} bez wartości każe Anchorowi znaleźć bump kanoniczny
+    \item Anchor wylicza adres i porównuje go z kontem podanym w transakcji
+    \item Niezgodność to błąd \texttt{ConstraintSeeds} --- przed ciałem instrukcji
+  \end{itemize}
+  \begin{codeblock}{Skarbiec i konto stanu jako PDA}
+\begin{lstlisting}[style=reveal]
+(*@\onslide<1->@*)#[account(
+(*@\onslide<1->@*)    seeds = [LOCKUP_SEED, &payer.key().to_bytes()],
+(*@\onslide<2->@*)    bump
+(*@\onslide<1->@*))]
+(*@\onslide<1->@*)pub locker: Account<'info, Locker>,
+(*@\onslide<4->@*)
+(*@\onslide<4->@*)// znaleziony bump czeka potem w ctx.bumps.locker
+\end{lstlisting}
+  \end{codeblock}
+\end{frame}
+
+% ================================================================
+\section{Podpis PDA}
+
+% 11. Program jako authority --- code IS the slide
+\begin{frame}[fragile]{Program podpisuje}
+  \begin{itemize}
+    \item Authority skarbca to PDA wyprowadzony przez nasz program
+    \item Do wywołania dokłada się więc składniki tego PDA razem z bumpem
+    \item Zewnętrzna lista to jeden wpis na każdy podpisujący PDA
+    \item \texttt{new\_with\_signer} zamiast \texttt{new} --- reszta wywołania bez zmian
+  \end{itemize}
+  \begin{codeblock}{Wypłata ze skarbca}
+\begin{lstlisting}[style=reveal]
+(*@\onslide<1->@*)let payer_key = ctx.accounts.payer.key.to_bytes();
+(*@\onslide<2->@*)let seeds = &[LOCKUP_SEED, payer_key.as_ref(),
+(*@\onslide<2->@*)              &[ctx.bumps.locker]];
+(*@\onslide<3->@*)let signer = &[&seeds[..]];
+(*@\onslide<4->@*)let cpi_ctx = CpiContext::new_with_signer(
+(*@\onslide<4->@*)    ctx.accounts.token_program.key(), cpi_accounts, signer);
+(*@\onslide<4->@*)transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
+\end{lstlisting}
+  \end{codeblock}
+\end{frame}
+
+% 12. Kto tu podpisal --- problem hook from the callee's side (alertblock)
+\begin{frame}{Kto tu podpisał}
+  \begin{itemize}
+    \item Token Program dostaje instrukcję i listę kont --- nic więcej
+    \item Nie widzi, że między nim a użytkownikiem stoi jakikolwiek program
+    \item Nie zna naszych składników, naszego bumpa ani naszej logiki
+    \item A jednak musi rozstrzygnąć, czy przelew jest autoryzowany
+  \end{itemize}
+  \vspace{0.25cm}
+  \begin{alertblock}{Pytanie}
+    Skąd wywoływany program wie, że wolno mu ruszyć cudze saldo ---
+    skoro nie dostał żadnego podpisu do sprawdzenia?
+  \end{alertblock}
+\end{frame}
+
+% 13. Propagacja --- choreographed TikZ synced to bullets (§4.5b).
+%     This is the only frame that states the mechanism; the prose version that
+%     used to sit here said the same four things in words.
+\begin{frame}{Podpis się przenosi}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=1pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.3cm, minimum height=0.6cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\scriptsize\itshape, text=stplmuted},
+        flag/.style={font=\scriptsize\bfseries, text=stplred},
+      ]
+      % Stage 1: the three participants + the outer transaction
+      \node[box] (u) at (0, 0) {Użytkownik};
+      \node[box, minimum width=2.7cm] (d) at (4.6, 0) {diamond\_hands};
+      \node[box, minimum width=2.3cm] (t) at (9.2, 0) {Token-2022};
+      \draw[arr] (u) -- (d) node[midway, above, lbl] {transakcja};
+
+      % Stage 2: the user's flag, set once at the transaction boundary
+      \begin{scope}[visible on=<2->]
+        \node[flag] at (2.3, -0.6) {payer: is\_signer};
+      \end{scope}
+
+      % Stage 3: the CPI hop --- the same flag travels
+      \begin{scope}[visible on=<3->]
+        \draw[arr] (d) -- (t) node[midway, above, lbl] {CPI};
+        \node[flag] at (6.9, -0.6) {payer: is\_signer};
+      \end{scope}
+
+      % Stage 4: invoke_signed adds a second flag
+      \begin{scope}[visible on=<4->]
+        \node[flag] at (6.9, -1.05) {locker: is\_signer};
+        \node[lbl] at (6.9, -1.5) {invoke\_signed};
+      \end{scope}
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.3cm}
+  \begin{itemize}
+    \item<+-> Sieć weryfikuje podpis użytkownika \textbf{raz}, przy transakcji
+    \item<+-> Flaga \texttt{is\_signer} zostaje na koncie \texttt{payer}
+    \item<+-> Przy CPI flaga przechodzi do wywołania niezmieniona
+    \item<+-> \texttt{invoke\_signed} dokłada drugą --- dla PDA \texttt{locker}
+  \end{itemize}
+  \begin{block}{Kluczowe zdanie}
+    Przy podpisie PDA nie powstaje żaden podpis kryptograficzny --- wywoływany
+    traktuje konto tak, jakby było podpisane.
+    \hfill\textcolor{stplmuted}{\tiny docs.rs/solana-cpi}
+  \end{block}
+\end{frame}
+
+% 14. Sprawdzenie u wywolywanego --- code IS the slide (the payoff)
+\begin{frame}[fragile]{Sprawdzenie u odbiorcy}
+  \begin{itemize}
+    \item Token Program porównuje podane authority z zapisanym w koncie
+    \item Potem sprawdza jedną flagę --- i na tym cała weryfikacja się kończy
+    \item Nie pyta, czy flagę postawił człowiek, czy program
+    \item Ta sama linia obsługuje podpis użytkownika i podpis PDA
+  \end{itemize}
+  \begin{codeblock}{Weryfikacja po stronie Token Programu}
+\begin{lstlisting}[style=reveal]
+(*@\onslide<1->@*)if expected_owner != owner_account_info.key {
+(*@\onslide<1->@*)    return Err(TokenError::OwnerMismatch.into());
+(*@\onslide<1->@*)}
+(*@\onslide<2->@*)if !owner_account_info.is_signer {
+(*@\onslide<2->@*)    return Err(ProgramError::MissingRequiredSignature);
+(*@\onslide<2->@*)}
+(*@\onslide<4->@*)// flaga is_signer to jedyna informacja o autoryzacji
+\end{lstlisting}
+  \end{codeblock}
+\end{frame}
+
+% 15. Dwa zrodla flagi --- A-vs-B opposition (§4.4, no helper block)
+\begin{frame}{Dwa źródła flagi}
+  % Both columns open with a block, whose leading \pause would push the first
+  % bullet past overlay 1 and open the frame on a blank slide.
+  \addtocounter{beamerpauses}{-3}%
+  \begin{columns}
+    \column{0.48\textwidth}
+      \begin{block}{Podpis użytkownika}
+        \begin{itemize}
+          \item<+-> Dowodem jest \textbf{klucz prywatny}
+          \item<+-> Wystawia go człowiek, poza łańcuchem
+          \item<+-> Sięga po środki właściciela klucza
+          \item<+-> Wyciek klucza to utrata środków
+        \end{itemize}
+      \end{block}
+
+    \column{0.48\textwidth}
+      \begin{alertblock}{Podpis PDA}
+        \begin{itemize}
+          \item<+-> Dowodem jest \textbf{kod programu}
+          \item<+-> Wystawia go program, w trakcie wykonania
+          \item<+-> Sięga wyłącznie po własne PDA
+          \item<+-> Nie ma czego wykraść --- jest co audytować
+        \end{itemize}
+      \end{alertblock}
+  \end{columns}
+  \vspace{0.15cm}
+  \begin{center}
+    \textcolor{stplmuted}{\small Dla odbiorcy obie flagi wyglądają identycznie ---
+    a CPI potrafi uprawnienia wyłącznie \textbf{zawężać}.}
+  \end{center}
+\end{frame}
+
+% ================================================================
+\section{Podsumowanie}
+
+% 17. Pulapki --- (alertblock: risks)
+\begin{frame}{Pułapki}
+  \begin{itemize}
+    \item Składniki bez klucza użytkownika dają \textbf{jeden wspólny PDA}
+    \item Bump przyjęty od klienta pozwala trafić w adres inny niż kanoniczny
+    \item Podpis PDA autoryzuje wywołanie --- nie zastępuje kontroli, kto o nie prosi
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\tiny\bfseries, align=center},
+        u/.style={
+          draw=stplmuted, line width=0.7pt,
+          fill=stplcard, text=stplmuted,
+          rounded corners=2pt,
+          minimum width=1.5cm, minimum height=0.42cm, align=center,
+        },
+        pda/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=1.9cm, minimum height=0.42cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.7pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      % BAD: one shared PDA
+      \node[u] (a1) at (0, 0.5) {Ala};
+      \node[u] (b1) at (0, 0.0)  {Bob};
+      \node[u] (c1) at (0,-0.5) {Cyd};
+      \node[pda, draw=stplred!75!black] (s) at (2.9, 0) {jeden PDA};
+      \draw[arr, draw=stplred!75!black] (a1) -- (s);
+      \draw[arr, draw=stplred!75!black] (b1) -- (s);
+      \draw[arr, draw=stplred!75!black] (c1) -- (s);
+      \node[lbl, text=stplred] at (1.45, -0.92) {seeds = [,,vault'']};
+
+      % GOOD: one PDA per user
+      \node[u] (a2) at (6.2, 0.5) {Ala};
+      \node[u] (b2) at (6.2, 0.0)  {Bob};
+      \node[u] (c2) at (6.2,-0.5) {Cyd};
+      \node[pda] (p1) at (9.1, 0.5) {PDA Ali};
+      \node[pda] (p2) at (9.1, 0.0)  {PDA Boba};
+      \node[pda] (p3) at (9.1,-0.5) {PDA Cyda};
+      \draw[arr] (a2) -- (p1);
+      \draw[arr] (b2) -- (p2);
+      \draw[arr] (c2) -- (p3);
+      \node[lbl] at (7.65, -0.92) {seeds = [,,vault'', klucz]};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.05cm}
+  \begin{alertblock}{Zasada}
+    Podpis PDA mówi wyłącznie ,,ten program się zgadza''.
+    Czy zgodzić się \emph{powinien}, sprawdza sam program --- constraints i \texttt{Signer}.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Podsumowanie}
+  \begin{enumerate}
+    \item \textbf{CPI} to wywołanie innego programu wewnątrz jednej transakcji
+    \item \textbf{PDA} to adres wyliczony ze składników i ID programu, bez klucza
+    \item \textbf{Bump} przesuwa skrót poza krzywą --- kanoniczny to pierwszy trafiony
+    \item Flaga \texttt{is\_signer} \textbf{przenosi się} w dół drzewa wywołań
+    \item Odbiorca sprawdza samą flagę --- i to wystarcza mu za dowód tożsamości
+  \end{enumerate}
+  \vspace{0.2cm}
+  \begin{exampleblock}{Efekt}
+    Podpis PDA to sposób, w jaki jeden program dowodzi drugiemu swojej
+    tożsamości --- bez klucza, bez podpisu, na jednej fladze.
+  \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\begin{frame}[plain]
+  \begin{center}
+    \vfill
+    {\Huge\bfseries\color{stplwhite} gn}
+    \vfill
+  \end{center}
+\end{frame}
+
+\end{document}

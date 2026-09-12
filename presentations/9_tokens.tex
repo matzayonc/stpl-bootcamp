@@ -1,0 +1,392 @@
+\input{preamble}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Deck-local listing keywords: the shared Anchor set in preamble.tex predates
+%% the token-interface types used from Lekcja 9 onwards.
+\lstset{morekeywords={Interface,InterfaceAccount,TokenInterface,TokenAccount,
+                      Mint,Token,token,mint,authority,token_program,decimals,
+                      derive,Accounts,InitSpace}}
+
+\title{Tokeny}
+\subtitle{Mint, konto tokenowe i Token-2022 --- Solana Bootcamp}
+\author{}
+\institute{Superteam Poland}
+
+\begin{document}
+
+\maketitleframe
+
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+% ================================================================
+\section{Czym jest token}
+
+% 1. Wracamy do tokena --- problem hook (alertblock: gdzie mieszka saldo?)
+\begin{frame}{Wracamy do tokena}
+  \begin{itemize}
+    \item Z Lekcji 2: token to \textbf{saldo z regułami} zaszytymi w kodzie
+    \item Z Lekcji 5: wszystko na Solanie jest kontem --- więc saldo też
+    \item Phantom pokazuje listę tokenów, a Lekcja 8 mówiła o \emph{mincie}
+  \end{itemize}
+  \vspace{0.25cm}
+  \begin{alertblock}{Pytanie}
+    Konto portfela ma adres i lamporty --- ani jednego pola na tokeny.
+    Które konto trzyma saldo USDC?
+  \end{alertblock}
+\end{frame}
+
+% 2. Mint --- term debut (block: def)
+\begin{frame}{Mint}
+  \begin{itemize}
+    \item Definicja waluty mieszka w osobnym koncie --- to \textbf{Mint}
+    \item Jedno konto opisuje walutę: podaż, precyzję i prawo do dodruku
+    \item Kto trzyma \texttt{mint\_authority}, ten zwiększa podaż w dowolnej chwili
+    \item Adres mintu jest identyfikatorem tokena --- USDC to konkretny adres
+  \end{itemize}
+  \vspace{0.15cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        fld/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.6cm, minimum height=0.75cm, align=center,
+        },
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[lbl] (t) at (-2.3, 0) {konto \textsc{Mint}};
+      \node[fld] (a) at (0.2, 0) {supply\\[-1pt]\tiny\mdseries 21\,000\,000};
+      \node[fld] (b) at (3.0, 0) {decimals\\[-1pt]\tiny\mdseries 6};
+      \node[fld] (c) at (5.8, 0) {mint\_authority\\[-1pt]\tiny\mdseries klucz emitenta};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.15cm}
+  \begin{block}{Definicja}
+    Mint opisuje token, nie właściciela. Nie trzyma niczyjego salda ---
+    to dowód osobisty waluty, nie portfel.
+  \end{block}
+\end{frame}
+
+% 3. Konto tokenowe --- term debut (block: def)
+\begin{frame}{Konto tokenowe}
+  \begin{itemize}
+    \item Saldo mieszka w jeszcze innym koncie --- to \textbf{Token Account}
+    \item Wiąże trzy rzeczy: walutę, właściciela i kwotę
+    \item Jedna para właściciel--mint to jedno konto tokenowe
+    \item Konto tokenowe ma własny adres --- inny niż adres portfela
+  \end{itemize}
+  \vspace{0.15cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        fld/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.6cm, minimum height=0.75cm, align=center,
+        },
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[lbl] (t) at (-2.6, 0) {konto \textsc{Token Account}};
+      \node[fld] (a) at (0.2, 0) {mint\\[-1pt]\tiny\mdseries która waluta};
+      \node[fld] (b) at (3.0, 0) {owner\\[-1pt]\tiny\mdseries czyje saldo};
+      \node[fld] (c) at (5.8, 0) {amount\\[-1pt]\tiny\mdseries ile jednostek};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.15cm}
+  \begin{block}{Definicja}
+    Saldo to nie pole portfela, tylko osobne konto, które na portfel wskazuje.
+    Jeden portfel może mieć ich setki --- po jednym na każdy token.
+  \end{block}
+\end{frame}
+
+% 4. Dwa konta --- static diagram frame (§4.5a: no synchronized bullets)
+\begin{frame}<1>{Dwa konta}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=1pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.0cm, minimum height=0.6cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box] (pa) at (0,  1.3) {Portfel A};
+      \node[box] (pb) at (0, -1.3) {Portfel B};
+
+      \node[box, minimum width=2.7cm] (ka) at (4.2,  1.3) {Konto tokenowe};
+      \node[box, minimum width=2.7cm] (kb) at (4.2, -1.3) {Konto tokenowe};
+
+      \node[box, minimum width=1.8cm, minimum height=1.0cm] (m) at (8.4, 0) {Mint\\USDC};
+
+      \draw[arr] (ka) -- (pa) node[midway, above, lbl] {owner};
+      \draw[arr] (kb) -- (pb) node[midway, below, lbl] {owner};
+      \draw[arr] (ka) -- (m)  node[midway, above right, lbl] {mint};
+      \draw[arr] (kb) -- (m)  node[midway, below right, lbl] {mint};
+
+      \node[lbl] at (4.2,  2.05) {amount: 1\,500\,000};
+      \node[lbl] at (4.2, -2.05) {amount: 40\,000\,000};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.15cm}
+  \begin{itemize}
+    % Static frame renders overlay 1 only --- the default <+-> would push the
+    % second bullet to an overlay that never gets drawn.
+    \item<1-> Jeden mint, dwa konta tokenowe --- dwa niezależne salda
+    \item<1-> Saldo znajduje się po stronie konta, nie po stronie portfela
+  \end{itemize}
+\end{frame}
+
+% 5. Miejsca po przecinku --- (exampleblock: worked example)
+\begin{frame}{Miejsca po przecinku}
+  \begin{itemize}
+    \item Pole \texttt{amount} to liczba całkowita \texttt{u64} --- bez ułamków
+    \item Mint ustala \texttt{decimals} i dopiero to przesuwa przecinek
+    \item Sieć liczy wyłącznie na jednostkach bazowych, nigdy na ułamkach
+    \item Instrukcja przelewu podaje \texttt{decimals} osobno --- sieć je weryfikuje
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        arr/.style={-latex, draw=stplred, line width=1pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[font=\ttfamily\large, text=stplwhite] (raw) at (0, 0) {1\,500\,000};
+      \node[lbl] at (0, -0.55) {\texttt{amount} --- to widzi sieć};
+
+      \draw[arr] (1.7, 0) -- (3.6, 0)
+        node[midway, above, lbl] {decimals = 6};
+      \node[lbl] at (2.65, -0.32) {przesuń przecinek};
+
+      \node[font=\ttfamily\large, text=stplred] (val) at (5.4, 0) {1.500000};
+      \node[lbl] at (5.4, -0.55) {to widzi użytkownik};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.1cm}
+  \begin{exampleblock}{Przykład}
+    Pomyłka o jedno miejsce to pomyłka o dziesięciokrotność kwoty.
+  \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\section{Adres konta tokenowego}
+
+% 6. ATA --- term debut (block: def)
+\begin{frame}{ATA}
+  \begin{itemize}
+    \item Każda para właściciel--mint potrzebuje swojego konta tokenowego
+    \item Adres nie jest losowany --- wylicza się go z właściciela i mintu
+    \item Takie kanoniczne konto to \textbf{Associated Token Account (ATA)}
+    \item Portfel i eksplorator szukają salda dokładnie pod tym adresem
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.0cm, minimum height=0.5cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box] (o)  at (0,  0.6)  {właściciel};
+      \node[box] (m)  at (0,  0.0)  {mint};
+      \node[box] (tp) at (0, -0.6)  {token program};
+
+      \node[box, minimum width=1.4cm] (h) at (3.4, 0) {skrót};
+      \node[box, minimum width=2.4cm] (a) at (7.0, 0) {adres ATA};
+
+      \draw[arr] (o.east)  -- (h.west);
+      \draw[arr] (m.east)  -- (h.west);
+      \draw[arr] (tp.east) -- (h.west);
+      \draw[arr] (h) -- (a) node[midway, above, lbl] {zawsze ten sam};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.1cm}
+  \begin{block}{Zasada}
+    Adres liczy się lokalnie, zanim powstanie transakcja --- bez pytania sieci
+    o listę kont i bez zapisywania go gdziekolwiek.
+  \end{block}
+\end{frame}
+
+% 7. Skarbiec programu --- ATA vs program-chosen address (exampleblock)
+\begin{frame}{Skarbiec programu}
+  \begin{itemize}
+    \item Program przyjmujący depozyty też potrzebuje konta tokenowego
+    \item Nie musi to być ATA --- adres może wyliczyć z własnych składników
+    \item Adres ATA wybiera standard; adres skarbca wybiera autor programu
+    \item Oba powstają tak samo: z deterministycznego wyliczenia, nie z losowania
+  \end{itemize}
+  \vspace{0.25cm}
+  \begin{exampleblock}{Zapowiedź}
+    Skąd program bierze adres, którym potrafi rozporządzać --- i jak go potem
+    podpisuje, skoro nie ma do niego klucza --- to cała Lekcja 10.
+  \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\section{Programy tokenowe}
+
+% 8. Token Program --- owner vs authority (block: def)
+\begin{frame}{Token Program}
+  \begin{itemize}
+    \item Konto tokenowe należy do \textbf{Token Programu}, nie do portfela
+    \item Z Lekcji 5: właściciel konta to program, który zmienia jego bajty
+    \item Portfel jest tylko \texttt{authority} --- podpisem autoryzuje przelew
+    \item Bez podpisu authority Token Program odrzuca instrukcję
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.4cm, minimum height=0.6cm, align=center,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.9pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box, minimum width=2.8cm] (tp)  at (0,   0) {Token Program};
+      \node[box, minimum width=2.8cm] (acc) at (4.4, 0) {Konto tokenowe};
+      \node[box, minimum width=2.2cm] (w)   at (8.6, 0) {Portfel};
+
+      \draw[arr] (acc) -- (tp) node[midway, above, lbl] {owner};
+      \draw[arr] (acc) -- (w)  node[midway, above, lbl] {authority};
+
+      \node[lbl] at (2.2, -0.45) {zmienia bajty};
+      \node[lbl] at (6.5, -0.45) {zezwala podpisem};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{0.1cm}
+  \begin{block}{Konsekwencja}
+    Program nie ruszy cudzych tokenów samodzielnie --- musi poprosić
+    Token Program i mieć podpis authority.
+  \end{block}
+\end{frame}
+
+% 9. Token-2022 --- callback to Lekcja 8 (exampleblock: consequence)
+\begin{frame}{Token-2022}
+  \begin{itemize}
+    \item Z Lekcji 8: \textbf{Token-2022} to nowszy program tokenowy z rozszerzeniami
+    \item To osobny program pod osobnym adresem, a nie aktualizacja starego
+    \item Oba działają równolegle --- mint należy do jednego albo do drugiego
+    \item Ten sam układ pól i ta sama logika authority --- nic do uczenia od nowa
+  \end{itemize}
+  \vspace{0.1cm}
+  \begin{center}
+    \begin{tikzpicture}[
+        every node/.style={font=\scriptsize\bfseries, align=center},
+        box/.style={
+          draw=stplred, line width=0.9pt,
+          fill=stplcard, text=stplwhite,
+          rounded corners=2pt,
+          minimum width=2.8cm, minimum height=0.6cm, align=center,
+        },
+        small/.style={
+          draw=stplmuted, line width=0.7pt,
+          fill=stplcard, text=stplmuted,
+          rounded corners=2pt,
+          minimum width=2.4cm, minimum height=0.5cm, align=center,
+          font=\tiny\bfseries,
+        },
+        arr/.style={-latex, draw=stplred, line width=0.8pt},
+        lbl/.style={font=\tiny\itshape, text=stplmuted},
+      ]
+      \node[box] (spl) at (0,   0.6) {Token Program};
+      \node[box] (t22) at (5.4, 0.6) {Token-2022};
+
+      \node[small] (m1) at (0,   -0.45) {mint USDC};
+      \node[small] (m2) at (5.4, -0.45) {mint z rozszerzeniami};
+
+      \draw[arr] (m1) -- (spl);
+      \draw[arr] (m2) -- (t22);
+
+      \node[lbl] at (2.7, 0.6) {dwa osobne\\program ID};
+    \end{tikzpicture}
+  \end{center}
+  \vspace{-0.05cm}
+  \begin{exampleblock}{Konsekwencja}
+    Program obsługujący tokeny musi wiedzieć, do którego z dwóch programów
+    kierować wywołanie --- i nie może tego zgadywać.
+  \end{exampleblock}
+\end{frame}
+
+% 10. Interface --- code IS the slide (§4.3: code frame, no helper block)
+\begin{frame}[fragile]{Interface}
+  \begin{itemize}
+    \item Konta tokenowe deklaruje się w Anchorze jak każde inne
+    \item \texttt{Program<'info, Token>} przyjmuje dokładnie jeden program ID
+    \item \texttt{Interface<'info, TokenInterface>} przyjmuje oba programy tokenowe
+    \item Konta czyta się wtedy przez \texttt{InterfaceAccount}, nie \texttt{Account}
+  \end{itemize}
+  \begin{codeblock}{Konta tokenowe w strukturze instrukcji}
+\begin{lstlisting}[style=reveal]
+(*@\onslide<1->@*)#[derive(Accounts)]
+(*@\onslide<1->@*)pub struct Lockup<'info> {
+(*@\onslide<2->@*)    // tylko klasyczny SPL:
+(*@\onslide<2->@*)    // pub token_program: Program<'info, Token>,
+(*@\onslide<3->@*)    pub token_program: Interface<'info, TokenInterface>,
+(*@\onslide<4->@*)    pub mint: InterfaceAccount<'info, Mint>,
+(*@\onslide<4->@*)    pub vault: InterfaceAccount<'info, TokenAccount>,
+(*@\onslide<1->@*)}
+\end{lstlisting}
+  \end{codeblock}
+\end{frame}
+
+% 11. Constraints tokenowe --- (alertblock: naming trap)
+\begin{frame}[fragile]{Constraints tokenowe}
+  \begin{itemize}
+    \item \texttt{token::mint} --- konto tokenowe musi dotyczyć tego mintu
+    \item \texttt{token::authority} --- kto podpisem autoryzuje operacje na koncie
+    \item \texttt{token::token\_program} --- do którego programu konto należy
+    \item Z Lekcji 6: Anchor sprawdza wszystkie trzy przed ciałem instrukcji
+  \end{itemize}
+  \vspace{0.15cm}
+  \begin{alertblock}{Pułapka nazewnicza}
+    Pole \texttt{owner} w koncie tokenowym to \textbf{authority}, a nie
+    program będący właścicielem konta. Dwa pojęcia, jedno słowo.
+  \end{alertblock}
+\end{frame}
+
+% ================================================================
+\section{Podsumowanie}
+
+\begin{frame}{Podsumowanie}
+  \begin{enumerate}
+    \item \textbf{Mint} opisuje walutę: podaż, \texttt{decimals}, prawo do dodruku
+    \item \textbf{Token Account} trzyma saldo jednej pary właściciel--mint
+    \item Portfel nie ma salda --- jest \textbf{authority} nad osobnym kontem
+    \item \textbf{ATA} to adres wyliczony ze standardu; skarbiec wylicza program
+    \item \textbf{Interface} pozwala obsłużyć klasyczny SPL i Token-2022 jednym kodem
+  \end{enumerate}
+  \vspace{0.2cm}
+  \begin{exampleblock}{Efekt}
+    Saldo tokena to nie liczba w portfelu, tylko konto z własnym adresem
+    i własnym authority. To authority podpisuje każdy przelew.
+  \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\begin{frame}[plain]
+  \begin{center}
+    \vfill
+    {\Huge\bfseries\color{stplwhite} gn}
+    \vfill
+  \end{center}
+\end{frame}
+
+\end{document}
