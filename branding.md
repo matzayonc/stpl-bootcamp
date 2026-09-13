@@ -13,10 +13,13 @@
 
 ## Logo
 
-File: `images/stpl-logo.png` (white text + red semicircle, transparent background)
+File: `images/stpl-logo.png` (white "St" monogram + red-and-white flag dot,
+near-square, transparent background)
 
 - Title slide: `width=3cm`, above the title
-- Footline: `height=1.6ex`, left-aligned
+- Footline: `height=0.42cm`, left-aligned, lowered into the footline depth so
+  it sits on the page number's line (anything under ~0.4cm turns the
+  monogram into a blob)
 
 ## Layout
 
@@ -95,6 +98,7 @@ appearing on its bullet's overlay), use `codeblock` instead of `block`:
 
 ## Footline
 
-- No background
+- No background (`footline` color has empty `bg` so the background image
+  shows through; using `normal text` would paint a flat `stpldark` band)
 - Left: logo
 - Right: `n / total` page count in tiny `stplmuted` text

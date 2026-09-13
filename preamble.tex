@@ -175,12 +175,15 @@
 }
 
 %% ---- Footline: minimal ----
+%% Transparent bg so the background image shows through (normal text has
+%% bg=stpldark, which would paint a flat band over the image's bottom glow).
+\setbeamercolor{footline}{fg=stplwhite, bg=}
 \setbeamertemplate{footline}{%
-  \begin{beamercolorbox}[wd=\paperwidth, ht=0pt, dp=0.55cm]{normal text}%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=0pt, dp=0.55cm]{footline}%
     \hspace{0.85cm}%
-    \includegraphics[height=1.6ex]{images/stpl-logo.png}%
+    \raisebox{-0.42cm}{\includegraphics[height=0.42cm]{images/stpl-logo.png}}%
     \hfill%
-    \textcolor{stplmuted}{\tiny\insertframenumber\,/\,\inserttotalframenumber}%
+    \raisebox{-0.24cm}{\textcolor{stplmuted}{\tiny\insertframenumber\,/\,\inserttotalframenumber}}%
     \hspace{0.85cm}%
   \end{beamercolorbox}%
 }
