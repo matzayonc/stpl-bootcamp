@@ -1,0 +1,77 @@
+# Builds the lesson decks and publishes them as a GitHub Release.
+#
+#   push tag v*     -> permanent release named after the tag
+#   push to main    -> rolling "latest" pre-release (tag moved to HEAD)
+#   workflow_dispatch -> same as push to main
+#
+# Stable download link for a deck:
+#   https://github.com/matzayonc/stpl-slides/releases/download/latest/<deck>.pdf
+name: Build & release slides
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+# One release run per ref at a time; a newer push to main supersedes an
+# in-flight one so two runs never race on the "latest" release.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Same image as the Dockerfile: full TeX Live with beamer, latexmk and
+    # the Archivo font (texlive-fontsextra).
+    container: docker.io/texlive/texlive:latest
+    steps:
+      - name: Install build tools
+        # poppler-utils (pdftoppm) and qpdf are used by scripts/dedupe_overlays.py
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends make git python3 poppler-utils qpdf
+
+      - uses: actions/checkout@v4
+
+      - name: Build PDFs
+        run: make release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: slides
+          path: dist/*.pdf
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: slides
+          path: dist
+
+      - name: Publish versioned release
+        if: github.ref_type == 'tag'
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.pdf \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
+
+      - name: Refresh rolling "latest" pre-release
+        if: github.ref_type != 'tag'
+        run: |
+          # Delete release + tag so the tag can be re-created at the new commit.
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest dist/*.pdf \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Latest build (main)" \
+            --notes "Automatic build of \`main\` @ ${GITHUB_SHA::7}."

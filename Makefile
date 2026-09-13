@@ -5,12 +5,18 @@ DIST_DIR   = dist
 SOURCES := $(wildcard $(PRES_DIR)/*.tex)
 PDFS    := $(patsubst $(PRES_DIR)/%.tex,$(DIST_DIR)/%.pdf,$(SOURCES))
 
+# Decks that ship in a GitHub release: everything except 99_* (templates,
+# scratch, one-off talks) and archive_* (retired material)
+RELEASE_PDFS := $(filter-out $(DIST_DIR)/99_% $(DIST_DIR)/archive_%,$(PDFS))
+
 # Default presentation for single-target commands (override with PRES=name)
 PRES ?= $(basename $(notdir $(firstword $(SOURCES))))
 
-.PHONY: all open clean pptx
+.PHONY: all open clean pptx release
 
 all: $(PDFS)
+
+release: $(RELEASE_PDFS)
 
 $(DIST_DIR)/%.pdf: $(PRES_DIR)/%.tex preamble.tex scripts/dedupe_overlays.py
 	mkdir -p $(BUILD_DIR) $(DIST_DIR)

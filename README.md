@@ -29,6 +29,7 @@ duplicates in place using `qpdf`. No manual step required.
 
 ```bash
 make            # build all presentations → dist/*.pdf
+make release    # build only the decks that ship in a release (no 99_*, archive_*)
 make open       # open default presentation (first alphabetically)
 make clean      # remove build artifacts
 ```
@@ -53,6 +54,21 @@ make pptx PRES=2_defi
 ```
 
 Output PDFs go to `dist/`, PPTX files alongside them.
+
+## Releases
+
+`.github/workflows/release.yml` builds `make release` in the same
+`texlive/texlive` image as the `Dockerfile` and attaches the PDFs to a GitHub
+Release:
+
+- push to `main` (or a manual run) refreshes the rolling **`latest`**
+  pre-release — the tag is moved to the new commit, so links stay stable:
+  `https://github.com/matzayonc/stpl-slides/releases/download/latest/<deck>.pdf`
+- push a tag matching `v*` (e.g. `git tag v2026.09 && git push origin v2026.09`)
+  to cut a permanent, versioned release with auto-generated notes.
+
+`99_*` and `archive_*` decks are never released; see `RELEASE_PDFS` in the
+`Makefile`.
 
 ## Google Slides export
 
