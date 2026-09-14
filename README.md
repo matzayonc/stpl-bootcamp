@@ -70,6 +70,38 @@ Release:
 `99_*` and `archive_*` decks are never released; see `RELEASE_PDFS` in the
 `Makefile`.
 
+## Website
+
+`site/` is a Docusaurus site with the same branding as the decks (see
+`branding.md` → "Web"). `site/docs/` holds the deck content rewritten as
+web pages, grouped by topic (one folder per topic, one page per slide
+section, `index.md` carries the deck's *Podsumowanie*), plus the `exam/*.md`
+quizzes under *Pytania kontrolne*. Requires Node 20+.
+
+```bash
+cd site
+npm install
+npm start        # dev server at http://localhost:3000/stpl-slides/
+npm run build    # static output in site/build/
+```
+
+### Diagrams
+
+Every `tikzpicture` in `presentations/[0-7]_*.tex` is rendered to SVG for the
+site by `scripts/tikz2svg.py` (standalone `pdflatex` + `pdftocairo`):
+
+```bash
+make diagrams   # -> site/static/img/diagrams/<deck>-<nn>.svg
+```
+
+The SVGs are committed, so the site build needs no TeX. Re-run after editing
+a diagram in a deck; numbering follows the order of pictures in the file.
+
+`.github/workflows/site.yml` deploys `site/build` to GitHub Pages on every
+push to `main` that touches `site/**`:
+`https://matzayonc.github.io/stpl-slides/`. One-time setup: repo Settings →
+Pages → Source: "GitHub Actions".
+
 ## Google Slides export
 
 Convert a PDF to `.pptx` via LibreOffice, then upload to Google Drive or use **File → Import slides** in Google Slides:

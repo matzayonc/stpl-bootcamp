@@ -1,0 +1,109 @@
+/* Hero mirrors \setbeamertemplate{title page}: hero background, 5pt red
+   left bar, logo -> title -> 3cm rule -> subtitle -> institute · date. */
+.hero {
+  position: relative;
+  min-height: calc(100vh - var(--ifm-navbar-height));
+  display: flex;
+  align-items: center;
+  background: var(--stpl-dark) url('/img/bg-hero.png') center / cover no-repeat;
+  border-left: 5px solid var(--stpl-red);
+  overflow: hidden;
+}
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: var(--stpl-red);
+  pointer-events: none;
+}
+/* top-right glow, 7 % */
+.hero::before {
+  width: 42vw;
+  height: 42vw;
+  right: -12vw;
+  top: -18vw;
+  opacity: 0.07;
+}
+/* bottom-right glow, 4 % */
+.hero::after {
+  width: 26vw;
+  height: 26vw;
+  right: -6vw;
+  bottom: -14vw;
+  opacity: 0.04;
+}
+
+.inner {
+  position: relative;
+  width: min(85%, 960px);
+  margin-left: 8%;
+  padding: 3rem 0;
+}
+.logo {
+  width: 110px;
+  height: auto;
+  display: block;
+  margin-bottom: 1.6rem;
+}
+.title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--stpl-white);
+  margin: 0 0 0.6rem;
+}
+.rule {
+  width: 110px;
+  height: 2px;
+  background: var(--stpl-red);
+  margin: 0 0 0.9rem;
+}
+.subtitle {
+  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  color: var(--stpl-red);
+  margin: 0 0 1.8rem;
+}
+.meta {
+  color: var(--stpl-muted);
+  font-size: 0.95rem;
+  margin: 0 0 2.2rem;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.primary,
+.secondary {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  border-radius: 0;
+  text-decoration: none;
+}
+.primary {
+  background: var(--stpl-red);
+  color: var(--stpl-white);
+}
+.primary:hover {
+  background: var(--ifm-color-primary-light);
+  color: var(--stpl-white);
+  text-decoration: none;
+}
+.secondary {
+  border: 1px solid var(--stpl-muted);
+  color: var(--stpl-white);
+}
+.secondary:hover {
+  border-color: var(--stpl-red);
+  color: var(--stpl-white);
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .inner {
+    margin-left: 6%;
+    width: 88%;
+  }
+}

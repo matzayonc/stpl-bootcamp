@@ -102,3 +102,26 @@ appearing on its bullet's overlay), use `codeblock` instead of `block`:
   shows through; using `normal text` would paint a flat `stpldark` band)
 - Left: logo
 - Right: `n / total` page count in tiny `stplmuted` text
+
+## Web (Docusaurus)
+
+`site/src/css/custom.css` is the CSS implementation of the tokens above
+(`--stpl-dark`, `--stpl-card`, `--stpl-border`, `--stpl-red`, `--stpl-white`,
+`--stpl-muted`). The mapping to Beamer chrome:
+
+| Beamer | Web |
+|---|---|
+| Title page (hero bg, 5pt red bar, logo → title → rule → subtitle → institute · date) | `site/src/pages/index.tsx` |
+| Frame title red rule (`2.2cm × 1.5pt`) | `h1`/`h2::after`, `56px × 2px` |
+| `block` / `alertblock` / `exampleblock` | `:::note` / `:::warning` / `:::tip` admonitions, flat 3px left rule |
+| `lstlisting` (card bg, red left rule, red keywords, muted comments) | code blocks + `site/src/theme/prism-stpl.ts` |
+| Red `–` bullets, muted sub-bullets | `.markdown ul li::before` |
+| Progress bar | 2.5px red line on top of the navbar |
+| Footline (logo left, muted page count) | footer (logo, muted copyright) |
+| Mermaid colors (`images/src/config.json`) | `themeConfig.mermaid` in `site/docusaurus.config.ts` |
+| TikZ diagrams | rendered to SVG by `scripts/tikz2svg.py`, embedded in `<div className="diagram">` (`narrow` / `small` cap the width) |
+| Screenshots (`images/*.png`) | `<div className="diagram screenshot">`, thin `stplborder` frame |
+
+Font: Archivo via Google Fonts. Dark mode only; the theme switch is disabled.
+Change a color here and in `preamble.tex` first, then mirror it in
+`custom.css`.

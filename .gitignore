@@ -1,2 +1,28 @@
-build
-dist
+# LaTeX build output (latexmk aux_dir / out_dir, see .latexmkrc) and
+# intermediate PDFs from scripts/tikz2svg.py (build/diagrams/)
+build/
+dist/
+
+# Stray LaTeX aux files if something is compiled outside latexmk
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.toc
+*.vrb
+*.out
+
+# Website (site/): dependencies and generated output
+site/node_modules/
+site/.docusaurus/
+site/.cache-loader/
+site/build/
+
+# Local tooling / OS noise
+.claude/
+.DS_Store
+.env
+.env.*

@@ -1,0 +1,332 @@
+/*
+ * Superteam Poland — web branding.
+ * CSS port of preamble.tex / branding.md. Tokens first, then component
+ * overrides that mirror the Beamer chrome (frame title rule, dash bullets,
+ * flat left-accent blocks, code cards).
+ */
+
+:root {
+  /* ---- Brand tokens (same names as preamble.tex) ---- */
+  --stpl-dark: #0b0e0f;
+  --stpl-card: #161a1b;
+  --stpl-border: #1e2526;
+  --stpl-red: #dc143c;
+  --stpl-red-dark: #a50f2d;     /* stplred!75!black */
+  --stpl-alert-bg: #2a1a1e;     /* stplred!10!stplcard */
+  --stpl-white: #ffffff;
+  --stpl-muted: #8a9ba8;
+
+  --ifm-font-family-base: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-heading-font-family: var(--ifm-font-family-base);
+  --ifm-font-family-monospace: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+
+  --ifm-color-primary: var(--stpl-red);
+  --ifm-color-primary-dark: #c61236;
+  --ifm-color-primary-darker: #bb1133;
+  --ifm-color-primary-darkest: #9a0e2a;
+  --ifm-color-primary-light: #e42a50;
+  --ifm-color-primary-lighter: #e6365a;
+  --ifm-color-primary-lightest: #ec5c79;
+
+  --ifm-global-radius: 0;
+  --ifm-code-border-radius: 0;
+  --ifm-code-font-size: 90%;
+}
+
+/* Site is dark-only (colorMode.disableSwitch); define the palette on the
+   dark selector Docusaurus stamps on <html>, and on :root as fallback. */
+:root,
+[data-theme='dark'] {
+  --ifm-background-color: var(--stpl-dark);
+  --ifm-background-surface-color: var(--stpl-card);
+  --ifm-card-background-color: var(--stpl-card);
+  --ifm-navbar-background-color: var(--stpl-dark);
+  --ifm-footer-background-color: var(--stpl-dark);
+
+  --ifm-font-color-base: var(--stpl-white);
+  --ifm-heading-color: var(--stpl-white);
+  --ifm-font-color-secondary: var(--stpl-muted);
+  --ifm-color-secondary: var(--stpl-muted);
+  --ifm-color-content-secondary: var(--stpl-muted);
+
+  --ifm-link-color: var(--stpl-red);
+  --ifm-link-hover-color: var(--ifm-color-primary-lighter);
+
+  --ifm-toc-border-color: var(--stpl-border);
+  --ifm-hr-color: var(--stpl-border);
+  --ifm-color-emphasis-100: #121617;
+  --ifm-color-emphasis-200: var(--stpl-border);
+  --ifm-color-emphasis-300: #2a3335;
+  --ifm-color-emphasis-600: var(--stpl-muted);
+  --ifm-color-emphasis-700: #b3bfc8;
+  --ifm-color-emphasis-800: #d5dce1;
+
+  --ifm-menu-color: var(--stpl-muted);
+  --ifm-menu-color-active: var(--stpl-white);
+  --ifm-menu-color-background-active: transparent;
+  --ifm-menu-color-background-hover: var(--stpl-card);
+  --ifm-navbar-link-color: var(--stpl-white);
+  --ifm-navbar-link-hover-color: var(--stpl-red);
+  --ifm-breadcrumb-color-active: var(--stpl-white);
+  --ifm-breadcrumb-item-background-active: transparent;
+
+  --ifm-pre-background: var(--stpl-card);
+  --ifm-code-background: var(--stpl-card);
+  --ifm-table-border-color: var(--stpl-border);
+  --ifm-table-stripe-background: #101415;
+  --ifm-table-head-background: var(--stpl-card);
+
+  --docusaurus-highlighted-code-line-bg: rgba(220, 20, 60, 0.15);
+}
+
+html {
+  background: var(--stpl-dark);
+}
+
+/* ---- Navbar: flat, thin border, progress-bar-like red top line ---- */
+.navbar {
+  box-shadow: none;
+  border-bottom: 1px solid var(--stpl-border);
+  border-top: 2.5px solid var(--stpl-red);
+}
+.navbar__title {
+  font-weight: 700;
+}
+.navbar__logo img {
+  height: 1.6rem;
+}
+
+/* ---- Headings: short red rule below, like the frametitle ---- */
+.markdown h1,
+.markdown h2 {
+  font-weight: 700;
+  padding-bottom: 0.45rem;
+  position: relative;
+}
+.markdown h1::after,
+.markdown h2::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 2px;
+  background: var(--stpl-red);
+  margin-top: 0.45rem;
+}
+.markdown h3,
+.markdown h4 {
+  font-weight: 700;
+}
+
+/* ---- Bullets: bold red dash, muted small dash for sub-items ---- */
+.markdown ul {
+  list-style: none;
+  padding-left: 1.25rem;
+}
+.markdown ul > li {
+  position: relative;
+}
+.markdown ul > li::before {
+  content: '–';
+  position: absolute;
+  left: -1.25rem;
+  color: var(--stpl-red);
+  font-weight: 700;
+}
+.markdown ul ul > li::before {
+  color: var(--stpl-muted);
+  font-weight: 400;
+  font-size: 0.9em;
+}
+.markdown ol > li::marker {
+  color: var(--stpl-red);
+  font-weight: 700;
+}
+
+/* ---- Admonitions -> flat left-accent blocks (tcolorbox stplbase) ---- */
+.theme-admonition {
+  border: 0;
+  border-left: 3px solid var(--stpl-red);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--stpl-card);
+  color: var(--stpl-white);
+  padding: 0.6rem 0.9rem;
+}
+.theme-admonition [class*='admonitionHeading'] {
+  color: var(--stpl-white);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1rem;
+}
+.theme-admonition [class*='admonitionIcon'] {
+  display: none;
+}
+.theme-admonition {
+  /* alert-tinted inline code would clash with the flat card */
+  --ifm-code-background: var(--stpl-dark);
+  --ifm-alert-foreground-color: var(--stpl-white);
+  --ifm-alert-border-color: transparent;
+}
+/* block */
+.theme-admonition-note,
+.theme-admonition-info {
+  border-left-color: var(--stpl-red);
+  background: var(--stpl-card);
+}
+/* alertblock */
+.theme-admonition-warning,
+.theme-admonition-danger,
+.theme-admonition-caution {
+  border-left-color: var(--stpl-red-dark);
+  background: var(--stpl-alert-bg);
+}
+/* exampleblock */
+.theme-admonition-tip {
+  border-left-color: var(--stpl-muted);
+  background: var(--stpl-card);
+}
+
+/* ---- Code: card background, 2px red left rule, no radius ---- */
+.theme-code-block {
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 2px solid var(--stpl-red);
+  background: var(--stpl-card);
+}
+.theme-code-block pre {
+  border-radius: 0;
+}
+.theme-code-block > div:first-child:not(pre) {
+  /* title bar */
+  background: var(--stpl-card);
+  border-bottom: 1px solid var(--stpl-border);
+  color: var(--stpl-white);
+  font-weight: 700;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.markdown code {
+  border: 0;
+  padding: 0.1rem 0.3rem;
+}
+
+/* ---- Blockquote / tables / hr ---- */
+.markdown blockquote {
+  border-left: 3px solid var(--stpl-muted);
+  color: var(--stpl-muted);
+  background: transparent;
+}
+.markdown table th {
+  border-bottom: 2px solid var(--stpl-red);
+}
+
+/* ---- Sidebar & TOC ---- */
+.menu__link--active {
+  color: var(--stpl-white);
+  border-left: 2px solid var(--stpl-red);
+  margin-left: -2px;
+}
+.menu__link--active:not(.menu__link--sublist) {
+  background: transparent;
+}
+.table-of-contents__link--active {
+  color: var(--stpl-white);
+}
+.table-of-contents__link:hover {
+  color: var(--stpl-red);
+}
+
+/* ---- Pagination cards (prev/next) ---- */
+.pagination-nav__link {
+  border: 0;
+  border-left: 3px solid var(--stpl-border);
+  border-radius: 0;
+  background: var(--stpl-card);
+}
+.pagination-nav__link:hover {
+  border-left-color: var(--stpl-red);
+}
+.pagination-nav__sublabel {
+  color: var(--stpl-muted);
+}
+
+/* ---- Footer: no band, muted text, logo left ---- */
+.footer {
+  background: transparent;
+  border-top: 1px solid var(--stpl-border);
+  color: var(--stpl-muted);
+}
+.footer__title {
+  color: var(--stpl-white);
+}
+.footer__link-item {
+  color: var(--stpl-muted);
+}
+.footer__link-item:hover {
+  color: var(--stpl-red);
+}
+.footer__copyright {
+  color: var(--stpl-muted);
+  font-size: 0.8rem;
+}
+.footer__logo {
+  max-height: 28px;
+}
+
+/* ---- Mermaid: transparent canvas so the brand bg shows ---- */
+.docusaurus-mermaid-container svg {
+  background: transparent;
+}
+
+/* ---- Diagrams rendered from the decks (scripts/tikz2svg.py) ---- */
+.diagram {
+  margin: 1.25rem auto 1.5rem;
+  text-align: center;
+}
+.diagram img {
+  width: 100%;
+  max-width: 680px;
+  height: auto;
+}
+.diagram.small img {
+  max-width: 260px;
+}
+.diagram.narrow img {
+  max-width: 420px;
+}
+.diagram figcaption,
+.diagram .caption {
+  color: var(--stpl-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+.screenshot img {
+  max-width: 560px;
+  border: 1px solid var(--stpl-border);
+}
+
+/* ---- <details> as a flat card (exam answer keys) ---- */
+.markdown details {
+  border: 0;
+  border-left: 3px solid var(--stpl-muted);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--stpl-card);
+  --docusaurus-details-decoration-color: var(--stpl-red);
+}
+.markdown details summary {
+  font-weight: 700;
+}
+
+/* ---- Math ---- */
+.katex {
+  color: var(--stpl-white);
+  font-size: 1.05em;
+}
+.katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

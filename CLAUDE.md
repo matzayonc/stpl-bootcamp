@@ -26,6 +26,18 @@ skip this step.
 **Build, filenames, or repo structure questions**:
 - Read [`README.md`](README.md) — `make` targets, filename pattern, `gn` slide
 
+**Editing the website** (`site/`, Docusaurus):
+- Read [`branding.md`](branding.md) §Web — how the brand maps to CSS; the
+  implementation is `site/src/css/custom.css`
+- Content rules from `style.md` apply to doc pages too (Polish, impersonal,
+  no emojis, one helper block per concept)
+- `site/docs/` mirrors the decks by topic: `NN-<topic>/index.md` = the deck's
+  *Podsumowanie*, one page per slide section, `##` per frame, blocks →
+  `:::note` / `:::warning` / `:::tip`. When a deck changes, update the
+  matching page; when a `tikzpicture` changes, run `make diagrams`
+  (`README.md` §Diagrams). Exams in `exam/*.md` feed
+  `site/docs/08-pytania-kontrolne/`.
+
 ## Existing slides
 
 `presentations/` holds the deck source. Files follow `<index>_<slug>.tex`

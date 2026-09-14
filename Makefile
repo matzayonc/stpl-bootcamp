@@ -12,7 +12,7 @@ RELEASE_PDFS := $(filter-out $(DIST_DIR)/99_% $(DIST_DIR)/archive_%,$(PDFS))
 # Default presentation for single-target commands (override with PRES=name)
 PRES ?= $(basename $(notdir $(firstword $(SOURCES))))
 
-.PHONY: all open clean pptx release
+.PHONY: all open clean pptx release diagrams
 
 all: $(PDFS)
 
@@ -22,6 +22,10 @@ $(DIST_DIR)/%.pdf: $(PRES_DIR)/%.tex preamble.tex scripts/dedupe_overlays.py
 	mkdir -p $(BUILD_DIR) $(DIST_DIR)
 	latexmk $<
 	python3 scripts/dedupe_overlays.py $@
+
+# Render every tikzpicture in the decks to SVG for the website (site/)
+diagrams:
+	python3 scripts/tikz2svg.py
 
 open: $(DIST_DIR)/$(PRES).pdf
 	xdg-open $<
