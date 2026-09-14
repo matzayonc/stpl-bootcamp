@@ -26,17 +26,20 @@ skip this step.
 **Build, filenames, or repo structure questions**:
 - Read [`README.md`](README.md) — `make` targets, filename pattern, `gn` slide
 
-**Editing the website** (`site/`, Docusaurus):
+**Writing or editing web chapters** (`site/docs/`):
+- Read [`style.md`](style.md) §16 — the textbook methodology: page shape,
+  numbered listings, captured (never reconstructed) tool output, block
+  roles, `index.md` layout with *Podsumowanie* and *Ćwiczenia*
+- `site/docs/05-konta/` is the worked template; match its structure and
+  voice. Fetch real output with the installed CLIs (`solana`, `anchor`,
+  `spl-token`, `cargo`) — mainnet for reads, devnet for writes
+- When a deck changes, update the matching chapter; when a `tikzpicture`
+  changes, run `make diagrams` (`README.md` §Diagrams); `exam/*.md` feed
+  `site/docs/08-pytania-kontrolne/`
+
+**Editing the website chrome** (`site/`, Docusaurus):
 - Read [`branding.md`](branding.md) §Web — how the brand maps to CSS; the
   implementation is `site/src/css/custom.css`
-- Content rules from `style.md` apply to doc pages too (Polish, impersonal,
-  no emojis, one helper block per concept)
-- `site/docs/` mirrors the decks by topic: `NN-<topic>/index.md` = the deck's
-  *Podsumowanie*, one page per slide section, `##` per frame, blocks →
-  `:::note` / `:::warning` / `:::tip`. When a deck changes, update the
-  matching page; when a `tikzpicture` changes, run `make diagrams`
-  (`README.md` §Diagrams). Exams in `exam/*.md` feed
-  `site/docs/08-pytania-kontrolne/`.
 
 ## Existing slides
 

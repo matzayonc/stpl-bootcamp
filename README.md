@@ -73,10 +73,13 @@ Release:
 ## Website
 
 `site/` is a Docusaurus site with the same branding as the decks (see
-`branding.md` → "Web"). `site/docs/` holds the deck content rewritten as
-web pages, grouped by topic (one folder per topic, one page per slide
-section, `index.md` carries the deck's *Podsumowanie*), plus the `exam/*.md`
-quizzes under *Pytania kontrolne*. Requires Node 20+.
+`branding.md` → "Web"). `site/docs/` is the course **textbook**: one folder
+per topic, written as Rust-Book-style prose chapters that follow the deck's
+section order but go deeper — numbered listings, output captured from the
+real tools, a *Podsumowanie* and *Ćwiczenia* on every `index.md`. The
+`exam/*.md` quizzes live under *Pytania kontrolne*. Authoring rules are in
+`style.md` §16; `site/docs/05-konta/` is the reference chapter. Requires
+Node 20+.
 
 ```bash
 cd site

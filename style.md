@@ -1,6 +1,7 @@
 # Superteam Poland — Presentation Style Guide
 
-The source of truth for *content* and *narrative* in this slide deck repository.
+The source of truth for *content* and *narrative* in this repository — the
+Beamer decks (§1–§15) and the web chapters under `site/docs/` (§16).
 Pairs with `branding.md` (visual chrome) and `README.md` (build & filenames).
 See [`style-decisions.md`](style-decisions.md) for the interview that produced
 this doc — the *why* behind each rule lives there.
@@ -380,6 +381,161 @@ Slide *style* is identical for both. The differences are usage:
 - [ ] Specific numbers and quotes carry a muted citation.
 - [ ] No emojis, no prose paragraphs, no Polish translation of canonical
       English jargon.
+
+---
+
+## 16. Web chapters (`site/docs/`)
+
+The website is not a transcript of the decks. It is a **textbook** built on
+the model of *The Rust Programming Language*: full prose chapters that a
+reader works through alone, with numbered listings, real tool output and
+exercises. The decks are the spine — every chapter follows its deck's
+section order and vocabulary — but the chapter may go deeper than the
+slides and may add material the lecture skips. Chapter `05-konta` is the
+worked template; when a rule below is unclear, that chapter is the answer.
+
+Everything in §2 (progressive audience), §6 (problem → mechanism → name),
+§6.1 (analogies), §7 (anglicisms) and §11 (voice) applies verbatim. What
+follows is only what differs from slides.
+
+### 16.1 Files
+
+```
+site/docs/NN-<topic>/
+  _category_.json     # label, position, link → index
+  index.md            # opening, Zawartość, Podsumowanie, Ćwiczenia
+  01-<slug>.md        # one page per major section of the deck
+  02-<slug>.md
+  …
+```
+
+- `NN` is the topic number (`01`–`07`; `08` holds the quizzes from
+  `exam/*.md`, `09` is reserved for the first-program walkthrough).
+- Every page has frontmatter `title`, `description` (one sentence, used by
+  the sidebar tooltip and search), `sidebar_position`, and `slug`.
+- Pages are 150–300 lines. A section of the deck that needs more than that
+  is two pages; one that needs less is folded into a neighbour.
+
+### 16.2 Page shape
+
+1. **Opening paragraph** — the question this page answers, in plain Polish,
+   tied to the previous page's closing sentence. No "in this chapter we
+   will"; the question *is* the intro.
+2. **`##` sections** in the deck's order. Each section is prose: the problem,
+   the mechanism, then the bolded term (§6). Bullet lists only for real
+   enumerations — steps of an algorithm, rows of a checklist, the three
+   rules of a mechanism. Never a bullet that is a full sentence in disguise.
+3. **Hand-off sentence** — the last paragraph names the question the next
+   page answers.
+
+The hardest page of a chapter opens with `:::note To jest trudne` (the web
+form of §6.2). Do not use it anywhere else in the chapter.
+
+### 16.3 Listings
+
+Every code, CLI, JSON or log block is a numbered listing:
+
+```md
+```bash
+$ solana account <ADRES>
+…
+```
+
+<div className="listing"><strong>Listing 5-3.</strong> Konto tokena USDC: 165 bajtów danych, właścicielem jest Token Program.</div>
+```
+
+- Number is `N-k`: `N` = topic number without the leading zero, `k`
+  counts up through the chapter's pages in reading order (`index.md`
+  has no listings). Renumber the chapter when inserting one.
+- The caption states what the reader should notice, not what the code is.
+- Prose refers to listings by number ("Listing 5-3 pokazuje…") and then
+  **walks through it** — field by field for output, line by line for
+  code. A listing that gets no walkthrough is a listing the page does
+  not need.
+- CLI listings start with `$ ` and show the real command including
+  `--url`/`-u` when it matters. Use `<ADRES>`-style placeholders only
+  in "how to" snippets, never in captured output.
+- Rust listings are complete enough to compile in context: keep
+  `use`, `declare_id!`, struct headers — no `// ...` inside a struct
+  the reader is meant to type.
+
+### 16.4 Real output
+
+Output is **captured, not reconstructed**. `solana`, `anchor`, `spl-token`,
+`cargo`, `rustc` and `curl` against a public RPC are the sources; the
+Explorer and Phantom are captured as screenshots.
+
+- Read from **mainnet** for public accounts (USDC mint, Token Program, a
+  large exchange wallet). Write only on **devnet** with a throwaway
+  keypair.
+- Trim long output with a line containing `...` and say so in the
+  caption. Never add, reorder or "fix" a line.
+- Numbers that drift (rent rate, validator count, block height, fees)
+  are measured at writing time; the prose says "w chwili pisania" and the
+  chapter's exercises ask the reader to re-measure.
+- No API keys, no private RPC URLs, no personal addresses. Placeholder
+  program IDs must be valid base58 (`Vau1t111…`, `Lic1111…`).
+- Compiler errors are shown in full — the `help:` block is part of the
+  lesson.
+
+### 16.5 Blocks and diagrams
+
+Admonitions keep the semantic roles of §4.3, one role per block:
+
+| Slide | Web | Role |
+|---|---|---|
+| `block` | `:::note Tytuł` | definition, rule, invariant |
+| `alertblock` | `:::warning Tytuł` | risk, pitfall, cost |
+| `exampleblock` | `:::tip Tytuł` | analogy, worked example, effect |
+
+- Analogy blocks are titled `Analogia — <obraz>` and **chain within a
+  chapter**: the file in *Anatomia konta* becomes the path in *Adres i
+  PDA* and the deposit in *Koszt*; the chapter's `Podsumowanie` ends
+  with the full chain in one `:::tip Analogia na koniec`.
+- A page has as many blocks as it has sections that need one; the
+  one-block-per-slide rule does not apply. Two blocks in a row is a
+  smell.
+- Diagrams are the deck's TikZ pictures rendered by `make diagrams`,
+  embedded as `<div className="diagram">` (`narrow`/`small` cap the width)
+  with alt text that reads as a sentence. Screenshots use
+  `<div className="diagram screenshot">`. Do not draw new diagrams for the
+  web that the deck does not have; add them to the deck first.
+
+### 16.6 Cross-references
+
+- Link on the **first mention** of a concept that another chapter owns:
+  `[Klucze](../07-portfel-i-narzedzia/01-klucze.md)`. Relative `.md`
+  paths, to the page, not the folder.
+- Within a chapter, link forward once ("wyjaśnia rozdział [Koszt]") and
+  never re-explain what a previous page established — refer to the
+  listing number instead.
+- Every `index.md` links its quiz page in `08-pytania-kontrolne/`.
+
+### 16.7 `index.md`
+
+In this order:
+
+1. **Opening** — the chapter's one organising idea and what the chapter
+   adds beyond the deck; link to the deck PDF
+   (`releases/download/latest/<deck>.pdf`).
+2. `## Zawartość` — numbered list, one line per page: link, dash, the
+   three or four things the page covers. Then the quiz link.
+3. `## Podsumowanie` — three to five paragraphs restating the chapter's
+   mechanisms in the order taught, with the bolded terms; no new facts.
+   Ends with the chained analogy block.
+4. `## Ćwiczenia` — three or four numbered tasks with a bold title, doable
+   with the CLI, Explorer or a text editor; each has a concrete deliverable
+   ("zapisz…", "policz…", "wskaż, które sprawdzenie…"). Imperative mood is
+   allowed here and only here. No solutions on the page. State the
+   prerequisites (CLI installed, devnet SOL) in one sentence up front.
+
+### 16.8 Keeping the site in sync
+
+- When a deck changes, update the matching chapter in the same commit.
+- When a `tikzpicture` changes, run `make diagrams` and commit the SVGs.
+- When `exam/*.md` changes, mirror it in `08-pytania-kontrolne/`.
+- Live numbers in the text are stale by definition; re-measure them when
+  touching the page.
 
 ---
 
