@@ -144,3 +144,4 @@ Three items remain unaddressed (flagged at session close):
 Also unresolved: `3_amm` exists in both `.tex` and `.md`; `style.md` says
 `.tex` is canonical, so the `.md` duplicate is either obsolete or kept
 for the `pandoc/` flow.
+
