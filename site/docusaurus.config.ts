@@ -12,9 +12,9 @@ const config: Config = {
   favicon: 'img/favicon.png',
 
   url: 'https://matzayonc.github.io',
-  baseUrl: '/stpl-slides/',
+  baseUrl: '/stpl-bootcamp/',
   organizationName: 'matzayonc',
-  projectName: 'stpl-slides',
+  projectName: 'stpl-bootcamp',
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
