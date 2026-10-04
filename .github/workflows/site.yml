@@ -4,7 +4,7 @@
 #   workflow_dispatch                    -> same
 #
 # One-time setup: repo Settings -> Pages -> Source: "GitHub Actions".
-# Served at https://matzayonc.github.io/stpl-slides/
+# Served at https://matzayonc.github.io/stpl-bootcamp/
 name: Build & deploy site
 
 on:

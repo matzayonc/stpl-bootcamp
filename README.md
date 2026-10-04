@@ -84,7 +84,7 @@ Node 20+.
 ```bash
 cd site
 npm install
-npm start        # dev server at http://localhost:3000/stpl-slides/
+npm start        # dev server at http://localhost:3000/stpl-bootcamp/
 npm run build    # static output in site/build/
 ```
 
@@ -102,7 +102,7 @@ a diagram in a deck; numbering follows the order of pictures in the file.
 
 `.github/workflows/site.yml` deploys `site/build` to GitHub Pages on every
 push to `main` that touches `site/**`:
-`https://matzayonc.github.io/stpl-slides/`. One-time setup: repo Settings →
+`https://matzayonc.github.io/stpl-bootcamp/`. One-time setup: repo Settings →
 Pages → Source: "GitHub Actions".
 
 ## Google Slides export
